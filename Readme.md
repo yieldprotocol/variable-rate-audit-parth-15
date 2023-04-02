@@ -6,12 +6,12 @@ Unlike fixed rate borrowing there is no intermediary token involved while borrow
 
 Here are the main components of the system:
 
-1. [VRLadle](./VRLadle.sol) - The main contract that handles the lending/borrowing of the variable rate loan.
-2. [VRCauldron](./VRCauldron.sol) - The contract that handles the accounting.
-3. [VRWitch](./VRWitch.sol) - The contract that handles the liquidation.
-4. [VYToken](./VYToken.sol) - The contract that handles the tokenization of the loan.
-5. [Join](../Join.sol)(not in scope) - The contract that holds the collateral & lent assets.
-6. Oracles (not in scope) - The contract that determines the interest rate & spot price of the collateral in terms of the base.
+1. [VRLadle](./src/variable/VRLadle.sol) - The main contract that handles the lending/borrowing of the variable rate loan.
+2. [VRCauldron](./src/variable/VRCauldron.sol) - The contract that handles the accounting.
+3. [VRWitch](./src/variable/VRWitch.sol) - The contract that handles the liquidation.
+4. [VYToken](./src/variable/VYToken.sol) - The contract that handles the tokenization of the loan.
+5. [Join](./src/Join.sol)(not in scope) - The contract that holds the collateral & lent assets.
+6. [VariableInterestRateOracle](./src/oracles/VariableInterestRateOracle.sol) - The contract that determines the interest rate of the base.
 
 ---
 
@@ -131,7 +131,8 @@ Here are the contracts that are in scope for the audit:
 | 📝   | src/variable/VYToken.sol                | 1               | \*\*\*\*   | 245      | 240      | 151     | 62            | 151            |
 | 🔍   | src/variable/interfaces/IVRCauldron.sol | \*\*\*\*        | 1          | 109      | 9        | 6       | 22            | 37             |
 | 🔍   | src/variable/interfaces/IVRWitch.sol    | \*\*\*\*        | 1          | 140      | 46       | 33      | 78            | 19             |
-| 📝🔍 | **Totals**                              | **5**           | **2**      | **1441** | **1078** | **726** | **317**       | **696**        |
+| 📝 | src/oracles/VariableInterestRateOracle.sol | 1 | **** | 228 | 193 | 149 | 20 | 61 | **** |
+| 📝🔍 | **Totals**                              | **6**           | **2**      | **1669** | **1271** | **875** | **337**       | **757**        |
 
 ---
 # Building & Testing
