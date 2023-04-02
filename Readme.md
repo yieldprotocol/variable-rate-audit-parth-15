@@ -150,3 +150,4 @@ This project uses foundry to build and test the contracts.
 - This is a MVP. So, we are focussed towards delivering a usable & safe protocol.
 - We prefer clarity of code to enable faster iteration of the product even by non-core developers.
 - [Here](https://github.com/yieldprotocol/addendum-docs/blob/e1b8c294e5a8db7560c215d58fc3011a5f96c38d/COOKBOOK_VARIABLE.md) is the recepie book which specifies how the protocol can be used from the frontend.
+- You will aslo find a [how to hack](./How_to_hack.md) note which will help you know the potential attack vectors that we are aware of & are ok with.
