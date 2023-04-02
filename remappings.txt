@@ -1,0 +1,5 @@
+openzeppelin/=lib/openzeppelin-contracts/
+erc3156/=lib/ERC3156/
+@yield-protocol/utils-v2/=lib/yieldspace-tv/lib/yield-utils-v2/
+@yield-protocol/yieldspace-tv/=lib/yieldspace-tv/
+dss-interfaces/=lib/dss-interfaces/
