@@ -10,8 +10,8 @@ Here are the main components of the system:
 2. [VRCauldron](./src/variable/VRCauldron.sol) - The contract that handles the accounting.
 3. [VRWitch](./src/variable/VRWitch.sol) - The contract that handles the liquidation.
 4. [VYToken](./src/variable/VYToken.sol) - The contract that handles the tokenization of the loan.
-5. [Join](./src/Join.sol)(not in scope) - The contract that holds the collateral & lent assets.
-6. [VariableInterestRateOracle](./src/oracles/VariableInterestRateOracle.sol) - The contract that determines the interest rate of the base.
+5. [VariableInterestRateOracle](./src/oracles/VariableInterestRateOracle.sol) - The contract that determines the interest rate of the base for borrowing or lending.
+6. [Join](./src/Join.sol)(not in scope) - The contract that holds the collateral & lent assets.
 
 ---
 
@@ -44,6 +44,17 @@ You can refer to [this](https://github.com/code-423n4/2022-07-yield) for more de
 ## VYToken (151 SLOC)
 
 `VYToken` is a mechanism that allows user to lend their assets as we. The `VYToken` is a ERC20 token that represents the amount of asset lent. The `VYToken` can be burnt at any time to get the lent asset back.
+
+## VariableInterestRateOracle (149 SLOC)
+
+The oracle that determines the interest rate for borrowing or lending of the base. The oracle works on the interest rate model that is used by [Aave](https://docs.aave.com/risk/liquidity-risk/borrow-interest-rate#interest-rate-model). The parameters we use are:
+
+- Optimal Utilization Rate
+- Base Variable Borrow Rate
+- Variable Rate Slope 1
+- Variable Rate Slope 2
+
+The `Utilization Rate` is calculated by dividing the total debt by the total collateral. The `Variable Borrow Rate` is calculated by using the `Utilization Rate` and the parameters mentioned above.
 
 ---
 
@@ -122,29 +133,33 @@ Here are the permissions allocated to different contracts:
 
 Here are the contracts that are in scope for the audit:
 
-| Type | File                                    | Logic Contracts | Interfaces | Lines    | nLines   | nSLOC   | Comment Lines | Complex. Score |
-| ---- | --------------------------------------- | --------------- | ---------- | -------- | -------- | ------- | ------------- | -------------- |
-| 📝   | src/variable/VRCauldron.sol             | 1               | \*\*\*\*   | 459      | 383      | 286     | 61            | 193            |
-| 📝   | src/variable/VRLadle.sol                | 1               | \*\*\*\*   | 352      | 284      | 177     | 65            | 250            |
-| 📝   | src/variable/VRLadleStorage.sol         | 1               | \*\*\*\*   | 34       | 34       | 27      | 6             | 21             |
-| 📝   | src/variable/VRWitch.sol                | 1               | \*\*\*\*   | 102      | 82       | 46      | 23            | 25             |
-| 📝   | src/variable/VYToken.sol                | 1               | \*\*\*\*   | 245      | 240      | 151     | 62            | 151            |
-| 🔍   | src/variable/interfaces/IVRCauldron.sol | \*\*\*\*        | 1          | 109      | 9        | 6       | 22            | 37             |
-| 🔍   | src/variable/interfaces/IVRWitch.sol    | \*\*\*\*        | 1          | 140      | 46       | 33      | 78            | 19             |
-| 📝 | src/oracles/VariableInterestRateOracle.sol | 1 | **** | 228 | 193 | 149 | 20 | 61 | **** |
-| 📝🔍 | **Totals**                              | **6**           | **2**      | **1669** | **1271** | **875** | **337**       | **757**        |
+| Type | File                                       | Logic Contracts | Interfaces | Lines    | nLines   | nSLOC   | Comment Lines | Complex. Score |
+| ---- | ------------------------------------------ | --------------- | ---------- | -------- | -------- | ------- | ------------- | -------------- | 
+| 📝   | src/variable/VRCauldron.sol                | 1               | \*\*\*\*   | 459      | 383      | 286     | 61            | 193            |
+| 📝   | src/variable/VRLadle.sol                   | 1               | \*\*\*\*   | 352      | 284      | 177     | 65            | 250            |
+| 📝   | src/variable/VRLadleStorage.sol            | 1               | \*\*\*\*   | 34       | 34       | 27      | 6             | 21             |
+| 📝   | src/variable/VRWitch.sol                   | 1               | \*\*\*\*   | 102      | 82       | 46      | 23            | 25             |
+| 📝   | src/variable/VYToken.sol                   | 1               | \*\*\*\*   | 245      | 240      | 151     | 62            | 151            |
+| 🔍   | src/variable/interfaces/IVRCauldron.sol    | \*\*\*\*        | 1          | 109      | 9        | 6       | 22            | 37             |
+| 🔍   | src/variable/interfaces/IVRWitch.sol       | \*\*\*\*        | 1          | 140      | 46       | 33      | 78            | 19             |
+| 📝   | src/oracles/VariableInterestRateOracle.sol | 1               | \*\*\*\*   | 228      | 193      | 149     | 20            | 61             |
+| 📝🔍 | **Totals**                                 | **6**           | **2**      | **1669** | **1271** | **875** | **337**       | **757**        |
 
 ---
+
 # Building & Testing
-This project uses foundry to build and test the contracts. 
+
+This project uses foundry to build and test the contracts.
+
 - To build the contracts run the following command:
-```forge build```
+  `forge build`
 - To run the tests run the following command:
-```forge test --match-path test/<contract_name>.t.sol```
+  `forge test --match-path test/<contract_name>.t.sol`
 
 ---
 
 # Note
+
 - The protocol follows the [Forward Trust Pattern](https://hackernoon.com/using-the-forward-trust-design-pattern-to-make-scaling-easier). This means there are caveats to using the protocol. Things could go wrong if the protocol is not used from the protocol provided frontend.
 - Gas optimization is not a priority for the audit unless there is a huge improvement.
 - This is a MVP. So, we are focussed towards delivering a usable & safe protocol.
