@@ -16,6 +16,4 @@ assignees: ''
 
 ## Tool used
 
-Manual Review
-
 ## Recommendation
