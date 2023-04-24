@@ -179,10 +179,6 @@ contract VariableInterestRateOracle is IOracle, AccessControl, Constants {
             // Calculate the total debt
             uint128 totalDebt;
             DataTypes.Debt memory debt_;
-            debt_ = cauldron.debt(base.b6(), base.b6());
-            // Adding the debt borrowing base against itself
-            totalDebt = totalDebt + debt_.sum;
-
             // Adding the debt borrowing base against other ilks
             for (uint256 i = 0; i < rateParameters.ilks.length; i++) {
                 if (cauldron.ilks(base.b6(), rateParameters.ilks[i])) {
