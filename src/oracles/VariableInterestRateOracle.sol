@@ -153,6 +153,7 @@ contract VariableInterestRateOracle is IOracle, AccessControl, Constants {
         require(source.accumulated != 0, "Source not found");
 
         accumulated = source.accumulated;
+        require(accumulated > 0, "Accumulated rate is zero");
 
         updateTime = source.lastUpdated;
     }
