@@ -6,12 +6,12 @@ import "../interfaces/DataTypes.sol";
 import "@yield-protocol/utils-v2/src/access/AccessControl.sol";
 import "@yield-protocol/utils-v2/src/utils/Math.sol";
 import "@yield-protocol/utils-v2/src/utils/Cast.sol";
-import { UUPSUpgradeable } from "openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 library CauldronMath {
     /// @dev Add a number (which might be negative) to a positive, and revert if the result is negative.
     function add(uint128 x, int128 y) internal pure returns (uint128 z) {
-        require (y > 0 || x >= uint128(-y), "Result below zero");
+        require(y > 0 || x >= uint128(-y), "Result below zero");
         z = y > 0 ? x + uint128(y) : x - uint128(-y);
     }
 }
@@ -78,7 +78,8 @@ contract VRCauldron is UUPSUpgradeable, AccessControl, Constants {
     mapping(bytes6 => mapping(bytes6 => bool)) public ilks; // [baseId][assetId] Assets that are approved as collateral for the base
 
     mapping(bytes6 => IOracle) public rateOracles; // Variable rate oracle for an underlying
-    mapping(bytes6 => mapping(bytes6 => DataTypes.SpotOracle)) public spotOracles; // [assetId][assetId] Spot price oracles
+    mapping(bytes6 => mapping(bytes6 => DataTypes.SpotOracle))
+        public spotOracles; // [assetId][assetId] Spot price oracles
 
     // ==== Protocol data ====
     mapping(bytes6 => mapping(bytes6 => DataTypes.Debt)) public debt; // [baseId][ilkId] Max and sum of debt per underlying and collateral.
@@ -94,17 +95,19 @@ contract VRCauldron is UUPSUpgradeable, AccessControl, Constants {
 
     // ==== Upgradability ====
 
-    /// @dev Give the ROOT role and create a LOCK role with itself as the admin role and no members. 
+    /// @dev Give the ROOT role and create a LOCK role with itself as the admin role and no members.
     /// Calling setRoleAdmin(msg.sig, LOCK) means no one can grant that msg.sig role anymore.
-    function initialize (address root_) public {
+    function initialize(address root_) public {
         require(!initialized, "Already initialized");
-        initialized = true;             // On an uninitialized contract, no governance functions can be executed, because no one has permission to do so
-        _grantRole(ROOT, root_);        // Grant ROOT
-        _setRoleAdmin(LOCK, LOCK);      // Create the LOCK role by setting itself as its own admin, creating an independent role tree
+        initialized = true; // On an uninitialized contract, no governance functions can be executed, because no one has permission to do so
+        _grantRole(ROOT, root_); // Grant ROOT
+        _setRoleAdmin(LOCK, LOCK); // Create the LOCK role by setting itself as its own admin, creating an independent role tree
     }
 
     /// @dev Allow to set a new implementation
-    function _authorizeUpgrade(address newImplementation) internal override auth {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override auth {}
 
     // ==== Administration ====
 
@@ -250,10 +253,10 @@ contract VRCauldron is UUPSUpgradeable, AccessControl, Constants {
     }
 
     /// @dev Transfer a vault to another user.
-    function _give(bytes12 vaultId, address receiver)
-        internal
-        returns (VRDataTypes.Vault memory vault)
-    {
+    function _give(
+        bytes12 vaultId,
+        address receiver
+    ) internal returns (VRDataTypes.Vault memory vault) {
         require(vaultId != bytes12(0), "Vault id is zero");
         require(vaults[vaultId].baseId != bytes6(0), "Vault doesn't exist"); // Base can't take bytes6(0) as their id
         vault = vaults[vaultId];
@@ -263,17 +266,18 @@ contract VRCauldron is UUPSUpgradeable, AccessControl, Constants {
     }
 
     /// @dev Transfer a vault to another user.
-    function give(bytes12 vaultId, address receiver)
-        external
-        auth
-        returns (VRDataTypes.Vault memory vault)
-    {
+    function give(
+        bytes12 vaultId,
+        address receiver
+    ) external auth returns (VRDataTypes.Vault memory vault) {
         vault = _give(vaultId, receiver);
     }
 
     // ==== Asset and debt management ====
 
-    function vaultData(bytes12 vaultId)
+    function vaultData(
+        bytes12 vaultId
+    )
         internal
         view
         returns (
@@ -288,36 +292,39 @@ contract VRCauldron is UUPSUpgradeable, AccessControl, Constants {
 
     /// @dev Convert a base amount to debt terms.
     /// @notice Think about rounding up if using, since we are dividing.
-    function debtFromBase(bytes6 baseId, uint128 base)
-        external
-        returns (uint128 art)
-    {
-        art = _debtFromBase(baseId, base);
+    /// @return art is the normalized debt of a position. It's calculated as the current debt divided by the accumulated rate
+    function debtFromBase(
+        bytes6 baseId,
+        uint128 base
+    ) external returns (uint128 art) {
+        art = _baseToArt(baseId, base);
     }
 
     /// @dev Convert a base amount to debt terms.
     /// @notice Think about rounding up if using, since we are dividing.
-    function _debtFromBase(bytes6 baseId, uint128 base)
-        internal
-        returns (uint128 art)
-    {
+    function _baseToArt(
+        bytes6 baseId,
+        uint128 base
+    ) internal returns (uint128 art) {
         (uint256 rate, ) = rateOracles[baseId].get(baseId, RATE, 0); // The value returned is an accumulator, it doesn't need an input amount
         art = uint256(base).wdivup(rate).u128();
     }
 
     /// @dev Convert a debt amount for a to base terms
-    function debtToBase(bytes6 baseId, uint128 art)
-        external
-        returns (uint128 base)
-    {
-        base = _debtToBase(baseId, art);
+    /// @return base is the current debt of a position, and is obtained by multiplying the normalized debt (art) by the current rate
+    function debtToBase(
+        bytes6 baseId,
+        uint128 art
+    ) external returns (uint128 base) {
+        base = _artToBase(baseId, art);
     }
 
     /// @dev Convert a debt amount for a to base terms
-    function _debtToBase(bytes6 baseId, uint128 art)
-        internal
-        returns (uint128 base)
-    {
+    /// @return base is the current debt of a position, and is obtained by multiplying the normalized debt (art) by the current rate
+    function _artToBase(
+        bytes6 baseId,
+        uint128 art
+    ) internal returns (uint128 base) {
         (uint256 rate, ) = rateOracles[baseId].get(baseId, RATE, 0); // The value returned is an accumulator, it doesn't need an input amount
         base = uint256(art).wmul(rate).u128();
     }
@@ -391,8 +398,8 @@ contract VRCauldron is UUPSUpgradeable, AccessControl, Constants {
             DataTypes.Debt memory debt_ = debt[vault_.baseId][vault_.ilkId];
             balances_.art = balances_.art.add(art);
             debt_.sum = debt_.sum.add(art);
-            uint128 dust = debt_.min * uint128(10)**debt_.dec;
-            uint128 line = debt_.max * uint128(10)**debt_.dec;
+            uint128 dust = debt_.min * uint128(10) ** debt_.dec;
+            uint128 line = debt_.max * uint128(10) ** debt_.dec;
             require(
                 balances_.art == 0 || balances_.art >= dust,
                 "Min debt not reached"
@@ -423,8 +430,8 @@ contract VRCauldron is UUPSUpgradeable, AccessControl, Constants {
 
         if (base != 0)
             art = base > 0
-                ? _debtFromBase(vault_.baseId, base.u128()).i128()
-                : -_debtFromBase(vault_.baseId, (-base).u128()).i128();
+                ? _baseToArt(vault_.baseId, base.u128()).i128()
+                : -_baseToArt(vault_.baseId, (-base).u128()).i128();
 
         balances_ = _pour(vaultId, vault_, balances_, ink, art);
 
@@ -447,7 +454,7 @@ contract VRCauldron is UUPSUpgradeable, AccessControl, Constants {
         ) = vaultData(vaultId);
 
         // Normalize the base amount to debt terms
-        int128 art = _debtFromBase(vault_.baseId, base).i128();
+        int128 art = _baseToArt(vault_.baseId, base).i128();
 
         balances_ = _pour(vaultId, vault_, balances_, -(ink.i128()), -art);
 
@@ -480,7 +487,7 @@ contract VRCauldron is UUPSUpgradeable, AccessControl, Constants {
             vault_.baseId,
             balances_.ink
         ); // ink * spot
-        uint256 baseValue = _debtToBase(vault_.baseId, balances_.art); // art * rate
+        uint256 baseValue = _artToBase(vault_.baseId, balances_.art); // art * rate
         return inkValue.i256() - baseValue.wmul(ratio).i256();
     }
 }
